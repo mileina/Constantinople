@@ -1,10 +1,5 @@
 fetch('menu.json')
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.json();
-  })
+  .then(response => response.json())
   .then(data => {
     const menuContainer = document.getElementById('menu');
     const sidebarItems = document.querySelectorAll('.sidebar ul li');
@@ -38,7 +33,7 @@ function displayMenu(items, supplements = null) {
     const product = document.createElement('div');
     product.classList.add('product');
     product.innerHTML = `
-      <img src="${item.image}" alt="${item.name}" onerror="handleImageError(this)">
+      <img src="${item.image}" alt="${item.name}">
       <h3>${item.name}</h3>
       <p>${item.desc}</p>
       <span class="price">${item.price}</span>
@@ -77,12 +72,6 @@ function openProductModal(item, supplements = null) {
   modal.style.display = 'block';
 }
 
-function handleImageError(img) {
-  console.error(`Erreur de chargement de l'image: ${img.src}`);
-  img.src = 'https://via.placeholder.com/150'; // Image de substitution si l'image ne se charge pas
-  img.alt = 'Image non disponible';
-}
-
 let cart = [];
 const cartCountElement = document.getElementById('cart-count');
 const cartItemsElement = document.getElementById('cart-items');
@@ -105,7 +94,6 @@ addToCartButton.addEventListener('click', () => {
   cartCountElement.textContent = cart.length;
   document.getElementById('modal').style.display = 'none';
 
-  showNotification(`"${title}" a été ajouté au panier !`);
   console.log('Panier:', cart);
 });
 
@@ -159,7 +147,7 @@ confirmOrderButton.addEventListener('click', () => {
   window.location.href = 'confirmation.html';
 });
 
-document.addEventListener('click', (event) => {
+window.addEventListener('click', (event) => {
   const modal = document.getElementById('modal');
   const cartModal = document.getElementById('cart-modal');
 
@@ -172,8 +160,16 @@ document.addEventListener('click', (event) => {
 });
 
 const modalClose = document.getElementById('modal-close');
+const modal = document.getElementById('modal');
+
 modalClose.addEventListener('click', () => {
-  document.getElementById('modal').style.display = 'none';
+    modal.style.display = 'none';
+});
+
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
 });
 
 function showNotification(message) {
@@ -185,3 +181,24 @@ function showNotification(message) {
     notification.classList.add('hidden');
   }, 3000);
 }
+
+addToCartButton.addEventListener('click', () => {
+  const title = addToCartButton.dataset.title;
+  let price = parseFloat(addToCartButton.dataset.price);
+
+  const selectedSupplements = [];
+  const options = document.querySelectorAll('.modal-options input[type="checkbox"]:checked');
+  options.forEach(option => {
+    selectedSupplements.push(option.value);
+    price += parseFloat(option.dataset.price);
+  });
+
+  cart.push({ title, price, supplements: selectedSupplements });
+
+  cartCountElement.textContent = cart.length;
+  document.getElementById('modal').style.display = 'none';
+
+  showNotification(`"${title}" a été ajouté au panier !`);
+
+  console.log('Panier:', cart);
+});
