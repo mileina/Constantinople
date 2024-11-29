@@ -114,6 +114,20 @@ main {
 
 
 
+.product img {
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  width: 100%;
+  max-height: 10px;
+  min-height: 150px; 
+  object-fit: contain;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+
 .product h3 {
   margin: 10px 0 5px;
   font-size: 16px;
