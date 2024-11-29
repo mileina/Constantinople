@@ -158,3 +158,47 @@ window.addEventListener('click', (event) => {
     cartModal.style.display = 'none';
   }
 });
+
+const modalClose = document.getElementById('modal-close');
+const modal = document.getElementById('modal');
+
+modalClose.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
+
+function showNotification(message) {
+  const notification = document.getElementById('notification');
+  notification.textContent = message;
+  notification.classList.remove('hidden');
+
+  setTimeout(() => {
+    notification.classList.add('hidden');
+  }, 3000);
+}
+
+addToCartButton.addEventListener('click', () => {
+  const title = addToCartButton.dataset.title;
+  let price = parseFloat(addToCartButton.dataset.price);
+
+  const selectedSupplements = [];
+  const options = document.querySelectorAll('.modal-options input[type="checkbox"]:checked');
+  options.forEach(option => {
+    selectedSupplements.push(option.value);
+    price += parseFloat(option.dataset.price);
+  });
+
+  cart.push({ title, price, supplements: selectedSupplements });
+
+  cartCountElement.textContent = cart.length;
+  document.getElementById('modal').style.display = 'none';
+
+  showNotification(`"${title}" a été ajouté au panier !`);
+
+  console.log('Panier:', cart);
+});

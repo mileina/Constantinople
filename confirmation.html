@@ -13,8 +13,7 @@
   <h1>Confirmation de Commande</h1>
   <section>
     <h2>Détails de la commande</h2>
-    <ul id="order-items">
-    </ul>
+    <ul id="order-items"></ul>
     <div class="total">
       <p>Total : <span id="order-total">0,00 €</span></p>
     </div>
@@ -22,16 +21,12 @@
       <h2>Informations Client</h2>
       <label for="prenom">Prénom *</label>
       <input type="text" id="prenom" name="prenom" required>
-      
       <label for="nom">Nom *</label>
       <input type="text" id="nom" name="nom" required>
-      
       <label for="phone">Téléphone *</label>
       <input type="tel" id="phone" name="phone" required>
-      
       <label for="email">Email *</label>
       <input type="email" id="email" name="email" required>
-
       <h2>Date</h2>
       <label>
         <input type="radio" name="pickup-time" value="asap" checked>
@@ -41,95 +36,76 @@
         <input type="radio" name="pickup-time" id="pickup-later" value="later">
         Récupérer plus tard
       </label>
-
       <h2>Moyen de paiement</h2>
       <label>
         <input type="radio" name="payment-method" value="cash" checked>
         Payer à la réception
       </label>
-      
       <h2>Commentaires</h2>
       <textarea placeholder="Vos commentaires (allergies, instructions spéciales)"></textarea>
-      
       <button type="submit">Confirmer la commande</button>
     </form>
   </section>
-
   <div id="date-modal" class="modal">
     <div class="modal-content">
       <span class="close" id="close-date-modal">&times;</span>
       <h2>Choisir une date</h2>
-      
       <label for="select-date">Date</label>
-      <select id="select-date">
-      </select>
-      
+      <select id="select-date"></select>
       <label for="select-time">Heure</label>
       <select id="select-time">
         <option value="11:30-11:45">11:30 – 11:45</option>
         <option value="12:00-12:15">12:00 – 12:15</option>
         <option value="12:30-12:45">12:30 – 12:45</option>
       </select>
-      
       <button id="confirm-date" class="confirm-date">Définir une date</button>
     </div>
   </div>
-
   <script>
     const orderData = JSON.parse(localStorage.getItem('orderData'));
-
     if (orderData) {
       const itemsList = document.getElementById('order-items');
       const totalElement = document.getElementById('order-total');
-
       orderData.items.forEach((item, index) => {
+        const supplementsText = item.supplements.length > 0 ? ` (${item.supplements.join(', ')})` : '';
         const li = document.createElement('li');
         li.innerHTML = `
-          ${item.title} - ${item.price} (${item.supplements.join(', ')})
+          ${item.title} - ${item.price} €${supplementsText}
           <button class="remove-item" data-index="${index}">X</button>
         `;
         itemsList.appendChild(li);
       });
-
-      totalElement.textContent = orderData.total;
-
+      totalElement.textContent = `${orderData.total} `;
       const removeButtons = document.querySelectorAll('.remove-item');
       removeButtons.forEach(button => {
         button.addEventListener('click', (event) => {
           const index = event.target.dataset.index;
-          orderData.items.splice(index, 1); 
-
+          orderData.items.splice(index, 1);
           localStorage.setItem('orderData', JSON.stringify(orderData));
-          
           location.reload();
         });
       });
     } else {
       document.getElementById('order-items').innerHTML = '<p>Aucune commande trouvée.</p>';
     }
-
     const dateModal = document.getElementById('date-modal');
     const closeDateModal = document.getElementById('close-date-modal');
     const confirmDateButton = document.getElementById('confirm-date');
     const selectDate = document.getElementById('select-date');
     const selectTime = document.getElementById('select-time');
     const pickupLaterRadio = document.getElementById('pickup-later');
-
     function getTwoDates() {
       const today = new Date();
       const tomorrow = new Date();
       tomorrow.setDate(today.getDate() + 1);
-
       const options = { weekday: 'short', day: 'numeric', month: 'short' };
       const todayText = `Aujourd'hui, ${today.toLocaleDateString('fr-FR', options)}`;
       const tomorrowText = `Demain, ${tomorrow.toLocaleDateString('fr-FR', options)}`;
-
       return [
         { value: today.toISOString().split('T')[0], text: todayText },
         { value: tomorrow.toISOString().split('T')[0], text: tomorrowText },
       ];
     }
-
     pickupLaterRadio.addEventListener('click', () => {
       const dates = getTwoDates();
       selectDate.innerHTML = '';
@@ -139,26 +115,20 @@
         option.textContent = date.text;
         selectDate.appendChild(option);
       });
-
       dateModal.style.display = 'block';
     });
-
     closeDateModal.addEventListener('click', () => {
       dateModal.style.display = 'none';
     });
-
     window.addEventListener('click', (event) => {
       if (event.target === dateModal) {
         dateModal.style.display = 'none';
       }
     });
-
     confirmDateButton.addEventListener('click', () => {
       const selectedDate = selectDate.value;
       const selectedTime = selectTime.value;
-
       console.log(`Date choisie : ${selectedDate}, Heure choisie : ${selectedTime}`);
-
       dateModal.style.display = 'none';
     });
   </script>
