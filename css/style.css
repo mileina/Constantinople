@@ -515,14 +515,14 @@ input[type="checkbox"] {
 
   .banner-section,
   main {
-    margin-left: 120px;
+    margin-left: 100px;
   }
 
   .product {
     padding: 6px;
     font-size: 0.7em;
     height: 150px;
-    width: 110px;
+    width: 150px;
   }
 
   .product img {
