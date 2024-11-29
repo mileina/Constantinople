@@ -8,7 +8,7 @@
 </head>
 <body>
   <header>
-    <a href="/index.html" class="back-button">&lt; Constantinople</a>
+    <a href="/index.html" class="back-button" id="back-button">&lt; Constantinople</a>
   </header>
   <h1>Confirmation de Commande</h1>
   <section>
@@ -62,41 +62,41 @@
     </div>
   </div>
   <script>
-    const orderData = JSON.parse(localStorage.getItem('orderData'));
-    if (orderData) {
-      const itemsList = document.getElementById('order-items');
-      const totalElement = document.getElementById('order-total');
-      let total = 0;
+    let orderData = JSON.parse(localStorage.getItem('orderData')) || { items: [] };
+    const itemsList = document.getElementById('order-items');
+    const totalElement = document.getElementById('order-total');
+    let total = 0;
 
-      function updateOrderItems() {
-        itemsList.innerHTML = '';
-        total = 0;
-        orderData.items.forEach((item, index) => {
-          const supplementsText = item.supplements.length > 0 ? ` (${item.supplements.join(', ')})` : '';
-          const li = document.createElement('li');
-          li.innerHTML = `
-            ${item.title} - ${item.price} €${supplementsText}
-            <button class="remove-item" data-index="${index}">X</button>
-          `;
-          itemsList.appendChild(li);
-          total += parseFloat(item.price);
+    function updateOrderItems() {
+      itemsList.innerHTML = '';
+      total = 0;
+      orderData.items.forEach((item, index) => {
+        const supplementsText = item.supplements.length > 0 ? ` (${item.supplements.join(', ')})` : '';
+        const li = document.createElement('li');
+        li.innerHTML = `
+          ${item.title} - ${item.price.toFixed(2).replace('.', ',')} €${supplementsText}
+          <button class="remove-item" data-index="${index}">X</button>
+        `;
+        itemsList.appendChild(li);
+        total += parseFloat(item.price);
+      });
+      totalElement.textContent = `${total.toFixed(2).replace('.', ',')} €`;
+      const removeButtons = document.querySelectorAll('.remove-item');
+      removeButtons.forEach(button => {
+        button.addEventListener('click', (event) => {
+          const index = event.target.dataset.index;
+          orderData.items.splice(index, 1);
+          localStorage.setItem('orderData', JSON.stringify(orderData));
+          updateOrderItems();
         });
-        totalElement.textContent = `${total.toFixed(2).replace('.', ',')} €`;
-        const removeButtons = document.querySelectorAll('.remove-item');
-        removeButtons.forEach(button => {
-          button.addEventListener('click', (event) => {
-            const index = event.target.dataset.index;
-            orderData.items.splice(index, 1);
-            localStorage.setItem('orderData', JSON.stringify(orderData));
-            updateOrderItems();
-          });
-        });
-      }
-
-      updateOrderItems();
-    } else {
-      document.getElementById('order-items').innerHTML = '<p>Aucune commande trouvée.</p>';
+      });
     }
+    updateOrderItems();
+
+    const backButton = document.getElementById('back-button');
+    backButton.addEventListener('click', (event) => {
+      localStorage.setItem('orderData', JSON.stringify(orderData));
+    });
 
     const dateModal = document.getElementById('date-modal');
     const closeDateModal = document.getElementById('close-date-modal');
