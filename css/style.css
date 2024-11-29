@@ -515,22 +515,22 @@ input[type="checkbox"] {
 
   .banner-section,
   main {
-    margin-left: 100px;
+    margin-left: 110px;
   }
 
   .product {
     padding: 6px;
     font-size: 0.7em;
     height: 150px;
-    width: 150px;
+    width: 160px;
   }
 
   .product img {
     background-color: #fff;
     padding: 5px;
     border-radius: 5px;
-    width: 60% !important;
-    max-height: 40px;
+    width: 80% !important;
+    max-height: 50px;
     object-fit: contain;
     margin: 0 auto;
     display: block;
@@ -542,7 +542,6 @@ input[type="checkbox"] {
 
   .product p {
     font-size: 0.65em;
-    padding: 10px;
   }
 
   .product .price {
