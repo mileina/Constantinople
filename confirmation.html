@@ -62,7 +62,7 @@
     </div>
   </div>
   <script>
-    let orderData = JSON.parse(localStorage.getItem('orderData')) || { items: [] };
+    let orderData = JSON.parse(localStorage.getItem('orderData')) || JSON.parse(sessionStorage.getItem('orderData')) || { items: [] };
     const itemsList = document.getElementById('order-items');
     const totalElement = document.getElementById('order-total');
     let total = 0;
@@ -86,16 +86,26 @@
         button.addEventListener('click', (event) => {
           const index = event.target.dataset.index;
           orderData.items.splice(index, 1);
-          localStorage.setItem('orderData', JSON.stringify(orderData));
+          saveOrderData();
           updateOrderItems();
         });
       });
     }
+
+    function saveOrderData() {
+      localStorage.setItem('orderData', JSON.stringify(orderData));
+      sessionStorage.setItem('orderData', JSON.stringify(orderData));
+    }
+
     updateOrderItems();
 
     const backButton = document.getElementById('back-button');
     backButton.addEventListener('click', (event) => {
-      localStorage.setItem('orderData', JSON.stringify(orderData));
+      saveOrderData();
+    });
+
+    window.addEventListener('popstate', (event) => {
+      saveOrderData();
     });
 
     const dateModal = document.getElementById('date-modal');

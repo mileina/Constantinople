@@ -1,3 +1,8 @@
+let cart = [];
+const cartCountElement = document.getElementById('cart-count');
+const cartItemsElement = document.getElementById('cart-items');
+const cartTotalElement = document.getElementById('cart-total');
+
 fetch('menu.json')
   .then(response => response.json())
   .then(data => {
@@ -72,11 +77,6 @@ function openProductModal(item, supplements = null) {
   modal.style.display = 'block';
 }
 
-let cart = [];
-const cartCountElement = document.getElementById('cart-count');
-const cartItemsElement = document.getElementById('cart-items');
-const cartTotalElement = document.getElementById('cart-total');
-
 const addToCartButton = document.querySelector('.add-to-cart');
 addToCartButton.addEventListener('click', () => {
   const title = addToCartButton.dataset.title;
@@ -92,6 +92,8 @@ addToCartButton.addEventListener('click', () => {
   cart.push({ title, price, supplements: selectedSupplements });
 
   cartCountElement.textContent = cart.length;
+
+  localStorage.setItem('orderData', JSON.stringify(cart));
   document.getElementById('modal').style.display = 'none';
 
   showNotification(`"${title}" a été ajouté au panier !`);
@@ -122,11 +124,23 @@ function updateCartModal() {
     button.addEventListener('click', (event) => {
       const index = event.target.dataset.index;
       cart.splice(index, 1);
+
+      localStorage.setItem('orderData', JSON.stringify(cart));
+
       updateCartModal();
       cartCountElement.textContent = cart.length;
     });
   });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const savedCart = JSON.parse(localStorage.getItem('orderData'));
+  if (savedCart) {
+    cart = savedCart;
+    cartCountElement.textContent = cart.length;
+    updateCartModal();
+  }
+});
 
 const cartButton = document.querySelector('.cart');
 cartButton.addEventListener('click', () => {
