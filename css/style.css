@@ -367,6 +367,16 @@ input[type="checkbox"] {
   top: 0;
 }
 
+#modal-close,
+#cart-close {
+  background-color: #ffffff; 
+  color: #000000; 
+  border-radius: 20%; 
+  padding: 10px; 
+  font-size: 15px;
+  cursor: pointer; 
+}
+
 
 
 @media (max-width: 1024px) {
