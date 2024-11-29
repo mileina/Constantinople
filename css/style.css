@@ -547,13 +547,14 @@ input[type="checkbox"] {
   }
 
   .product img {
-    display: block !important;
-    visibility: visible !important;
-    width: 100%;
-    height: auto;
-}
-
-
+    display: block;
+    background-color: #fff;
+    padding: 5px;
+    border-radius: 5px;
+    width: 100%; 
+    height: auto; 
+    object-fit: cover;
+  }
   
 
   .product h3 {
