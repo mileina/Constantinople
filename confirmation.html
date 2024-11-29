@@ -62,7 +62,7 @@
     </div>
   </div>
   <script>
-    let orderData = JSON.parse(localStorage.getItem('orderData')) || JSON.parse(sessionStorage.getItem('orderData')) || { items: [] };
+    let orderData = JSON.parse(localStorage.getItem('orderData')) || { items: [] };
     const itemsList = document.getElementById('order-items');
     const totalElement = document.getElementById('order-total');
     let total = 0;
@@ -94,7 +94,6 @@
 
     function saveOrderData() {
       localStorage.setItem('orderData', JSON.stringify(orderData));
-      sessionStorage.setItem('orderData', JSON.stringify(orderData));
     }
 
     updateOrderItems();
@@ -104,7 +103,7 @@
       saveOrderData();
     });
 
-    window.addEventListener('popstate', (event) => {
+    window.addEventListener('beforeunload', (event) => {
       saveOrderData();
     });
 
