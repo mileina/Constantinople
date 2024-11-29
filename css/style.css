@@ -554,6 +554,7 @@ input[type="checkbox"] {
     width: 100%; 
     height: auto; 
     object-fit: cover;
+    z-index: 100;
   }
   
 
@@ -575,8 +576,8 @@ input[type="checkbox"] {
   }
 
   footer {
-    padding: 8px 15px;
-    margin-left: 35%;
+    padding: 8px 30px;
+    margin-left: 30%;
   }
 
   .footer-container {
