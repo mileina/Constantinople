@@ -66,34 +66,45 @@
     if (orderData) {
       const itemsList = document.getElementById('order-items');
       const totalElement = document.getElementById('order-total');
-      orderData.items.forEach((item, index) => {
-        const supplementsText = item.supplements.length > 0 ? ` (${item.supplements.join(', ')})` : '';
-        const li = document.createElement('li');
-        li.innerHTML = `
-          ${item.title} - ${item.price} €${supplementsText}
-          <button class="remove-item" data-index="${index}">X</button>
-        `;
-        itemsList.appendChild(li);
-      });
-      totalElement.textContent = `${orderData.total} `;
-      const removeButtons = document.querySelectorAll('.remove-item');
-      removeButtons.forEach(button => {
-        button.addEventListener('click', (event) => {
-          const index = event.target.dataset.index;
-          orderData.items.splice(index, 1);
-          localStorage.setItem('orderData', JSON.stringify(orderData));
-          location.reload();
+      let total = 0;
+
+      function updateOrderItems() {
+        itemsList.innerHTML = '';
+        total = 0;
+        orderData.items.forEach((item, index) => {
+          const supplementsText = item.supplements.length > 0 ? ` (${item.supplements.join(', ')})` : '';
+          const li = document.createElement('li');
+          li.innerHTML = `
+            ${item.title} - ${item.price} €${supplementsText}
+            <button class="remove-item" data-index="${index}">X</button>
+          `;
+          itemsList.appendChild(li);
+          total += parseFloat(item.price);
         });
-      });
+        totalElement.textContent = `${total.toFixed(2).replace('.', ',')} €`;
+        const removeButtons = document.querySelectorAll('.remove-item');
+        removeButtons.forEach(button => {
+          button.addEventListener('click', (event) => {
+            const index = event.target.dataset.index;
+            orderData.items.splice(index, 1);
+            localStorage.setItem('orderData', JSON.stringify(orderData));
+            updateOrderItems();
+          });
+        });
+      }
+
+      updateOrderItems();
     } else {
       document.getElementById('order-items').innerHTML = '<p>Aucune commande trouvée.</p>';
     }
+
     const dateModal = document.getElementById('date-modal');
     const closeDateModal = document.getElementById('close-date-modal');
     const confirmDateButton = document.getElementById('confirm-date');
     const selectDate = document.getElementById('select-date');
     const selectTime = document.getElementById('select-time');
     const pickupLaterRadio = document.getElementById('pickup-later');
+
     function getTwoDates() {
       const today = new Date();
       const tomorrow = new Date();
@@ -106,6 +117,7 @@
         { value: tomorrow.toISOString().split('T')[0], text: tomorrowText },
       ];
     }
+
     pickupLaterRadio.addEventListener('click', () => {
       const dates = getTwoDates();
       selectDate.innerHTML = '';
@@ -117,14 +129,17 @@
       });
       dateModal.style.display = 'block';
     });
+
     closeDateModal.addEventListener('click', () => {
       dateModal.style.display = 'none';
     });
+
     window.addEventListener('click', (event) => {
       if (event.target === dateModal) {
         dateModal.style.display = 'none';
       }
     });
+
     confirmDateButton.addEventListener('click', () => {
       const selectedDate = selectDate.value;
       const selectedTime = selectTime.value;
