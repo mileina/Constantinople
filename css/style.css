@@ -543,13 +543,8 @@ input[type="checkbox"] {
   }
 
   .product img {
-    display: block;
-    background-color: #fff;
-    padding: 5px;
-    border-radius: 5px;
-    width: 100%; 
-    height: auto; 
-    object-fit: cover;
+    max-height: 100px;
+    min-height: 100px; 
   }
   
 
