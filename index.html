@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restaurant Constantinople - Grillades</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="cart-section">
+    <div class="cart">
+      <i class="fas fa-shopping-cart cart-icon"></i>
+      <span id="cart-count">0</span>
+    </div>
+  </div>
+
+  <header class="banner-section">
+    <img src="images/Banner.png" alt="Restaurant Constantinople" class="header-banner">
+  </header>
+
+  <nav class="sidebar">
+    <h2 class="sidebar-title">Restaurant Constantinople</h2>
+    <h3 class="sidebar-menu-title">Menu</h3>
+    <ul>
+      <li class="active"><div class="icon-wrapper"><i class="fas fa-drumstick-bite"></i></div> Grillades</li>
+      <li><div class="icon-wrapper"><i class="fas fa-stroopwafel"></i></div> Tacos</li>
+      <li><div class="icon-wrapper"><i class="fas fa-bone"></i></div> Tenders</li>
+      <li><div class="icon-wrapper"><i class="fas fa-hotdog"></i></div> Sandwiches</li>
+      <li><div class="icon-wrapper"><i class="fas fa-hamburger"></i></div> Burgers</li>
+      <li><div class="icon-wrapper"><i class="fas fa-pizza-slice"></i></div> Pizza</li>
+      <li><div class="icon-wrapper"><i class="fas fa-mug-hot"></i></div> Desserts/Boissons</li>
+      <li><div class="icon-wrapper"><i class="fas fa-utensils"></i></div> Autres</li>
+      <li><div class="icon-wrapper"><i class="fa-solid fa-seedling"></i></i></div> Couscous</li>
+    </ul>
+  </nav>
+
+  <main>
+    <section class="menu" id="menu"></section>
+  </main>
+  
+  <footer>
+    <div class="footer-container">
+      <div class="footer-block">
+        <h4>Restaurant Constantinople</h4>
+        <p>Chez Constantinople, savourez des kebabs authentiques, préparés avec des ingrédients frais et des sauces maison. Une expérience gourmande à chaque bouchée !</p>
+        <div class="extra-info">
+          <img src="images/deliveroo.png" alt="Deliveroo">
+          <img src="images/wifi.png" alt="Wi-Fi">
+          <img src="images/visa.png" alt="Visa">
+          <img src="images/mastercard.png" alt="Mastercard">
+        </div>
+      </div>
+      <div class="footer-block">
+        <h4>Horaires</h4>
+        <ul>
+          <li>Lundi : 9:00 - 21:00</li>
+          <li>Mardi : 9:00 - 21:00</li>
+          <li>Mercredi : 9:00 - 21:00</li>
+          <li>Jeudi : 9:00 - 21:00</li>
+          <li>Vendredi : 9:00 - 21:00</li>
+          <li>Samedi : 9:00 - 21:00</li>
+          <li>Dimanche : 9:00 - 21:00</li>
+        </ul>
+      </div>
+      <div class="footer-block">
+        <h4>Téléphone</h4>
+        <p><i class="fas fa-phone"></i> 01.60.66.89.51</p>
+      </div>
+      <div class="footer-block">
+        <h4>Adresse</h4>
+        <p>2 Av. de la Forêt<br>77590 Bois-le-Roi</p>
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2624.9460270879567!2d2.3416706158661874!3d48.85661407928708!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e66edc6a0b6b0b%3A0xf97c2e93a5d3a7df!2sConstantinople!5e0!3m2!1sen!2sfr!4v1607459190462!5m2!1sen!2sfr"
+          width="100%" height="100" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2024 <a href="https://www.linkedin.com/in/pinya-meas" target="_blank" style="color: white; text-decoration: none; font-weight: bold;">Mil Inc.</a> All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <div class="modal-info">
+        <h3 id="modal-title">Titre du plat</h3>
+        <p id="modal-desc">Description du plat</p>
+        <span id="modal-price">Prix : 0,00 €</span>
+      </div>
+      <div class="modal-options" id="modal-options"></div>
+      <button class="add-to-cart">Ajouter à la commande</button>
+    </div>
+  </div>
+  
+  <div id="cart-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" id="cart-close">&times;</span>
+      <h3>Votre commande</h3>
+      <ul id="cart-items"></ul>
+      <div class="cart-total">
+        <p>Total : <span id="cart-total">0,00 €</span></p>
+      </div>
+      <button id="confirm-order" class="confirm-order">Ma commande</button>
+    </div>
+  </div>
+  
+  <script src="js/script.js"></script>
+</body>
+</html>
