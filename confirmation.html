@@ -17,7 +17,7 @@
     <div class="total">
       <p>Total : <span id="order-total">0,00 €</span></p>
     </div>
-    <form>
+    <form id="order-form">
       <h2>Informations Client</h2>
       <label for="prenom">Prénom *</label>
       <input type="text" id="prenom" name="prenom" required>
@@ -36,32 +36,39 @@
         <input type="radio" name="pickup-time" id="pickup-later" value="later">
         Récupérer plus tard
       </label>
+      <div id="time-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <h3>Choisissez un créneau :</h3>
+          <ul id="time-slots"></ul>
+          <button id="close-time-modal">Fermer</button>
+        </div>
+      </div>
+      <input type="hidden" id="selected-slot" name="selected-slot">
       <h2>Moyen de paiement</h2>
       <label>
         <input type="radio" name="payment-method" value="cash" checked>
         Payer à la réception
       </label>
       <h2>Commentaires</h2>
-      <textarea placeholder="Vos commentaires (allergies, instructions spéciales)"></textarea>
+      <textarea id="comments" placeholder="Vos commentaires (allergies, instructions spéciales)"></textarea>
       <button type="submit">Confirmer la commande</button>
     </form>
   </section>
-  <div id="date-modal" class="modal">
+
+  <div id="confirmation-modal" class="modal">
     <div class="modal-content">
-      <span class="close" id="close-date-modal">&times;</span>
-      <h2>Choisir une date</h2>
-      <label for="select-date">Date</label>
-      <select id="select-date"></select>
-      <label for="select-time">Heure</label>
-      <select id="select-time">
-        <option value="11:30-11:45">11:30 – 11:45</option>
-        <option value="12:00-12:15">12:00 – 12:15</option>
-        <option value="12:30-12:45">12:30 – 12:45</option>
-      </select>
-      <button id="confirm-date" class="confirm-date">Définir une date</button>
+      <h2>Confirmation</h2>
+      <p>Votre commande a été envoyée avec succès au serveur !</p>
+      <button id="close-confirmation-modal">Fermer</button>
     </div>
   </div>
+
   <script>
+    const openingHours = [
+      { start: "11:30", end: "15:00" },
+      { start: "18:00", end: "22:30" }
+    ];
+
     let orderData = JSON.parse(localStorage.getItem('orderData')) || { items: [] };
     const itemsList = document.getElementById('order-items');
     const totalElement = document.getElementById('order-total');
@@ -71,19 +78,24 @@
       itemsList.innerHTML = '';
       total = 0;
       orderData.items.forEach((item, index) => {
-        const supplementsText = item.supplements.length > 0 ? ` (${item.supplements.join(', ')})` : '';
+        const supplementsText = item.supplements.length > 0 ? `Suppléments: ${item.supplements.join(', ')}` : '';
+        const saucesText = item.sauces.length > 0 ? `Sauces: ${item.sauces.join(', ')}` : '';
+        const retirerText = item.retirer.length > 0 ? `À retirer: ${item.retirer.join(', ')}` : '';
         const li = document.createElement('li');
         li.innerHTML = `
-          ${item.title} - ${item.price.toFixed(2).replace('.', ',')} €${supplementsText}
-          <button class="remove-item" data-index="${index}">X</button>
+          <p><strong>${item.category}</strong> - ${item.title}</p>
+          <p>${item.price.toFixed(2).replace('.', ',')} €</p>
+          <p>${saucesText}</p>
+          <p>${retirerText}</p>
+          <p>${supplementsText}</p>
+          <button class="remove-item" data-index="${index}">Supprimer</button>
         `;
         itemsList.appendChild(li);
         total += parseFloat(item.price);
       });
       totalElement.textContent = `${total.toFixed(2).replace('.', ',')} €`;
-      const removeButtons = document.querySelectorAll('.remove-item');
-      removeButtons.forEach(button => {
-        button.addEventListener('click', (event) => {
+      document.querySelectorAll('.remove-item').forEach(button => {
+        button.addEventListener('click', event => {
           const index = event.target.dataset.index;
           orderData.items.splice(index, 1);
           saveOrderData();
@@ -96,65 +108,136 @@
       localStorage.setItem('orderData', JSON.stringify(orderData));
     }
 
-    updateOrderItems();
-
-    const backButton = document.getElementById('back-button');
-    backButton.addEventListener('click', (event) => {
-      saveOrderData();
-    });
-
-    window.addEventListener('beforeunload', (event) => {
-      saveOrderData();
-    });
-
-    const dateModal = document.getElementById('date-modal');
-    const closeDateModal = document.getElementById('close-date-modal');
-    const confirmDateButton = document.getElementById('confirm-date');
-    const selectDate = document.getElementById('select-date');
-    const selectTime = document.getElementById('select-time');
-    const pickupLaterRadio = document.getElementById('pickup-later');
-
-    function getTwoDates() {
-      const today = new Date();
-      const tomorrow = new Date();
-      tomorrow.setDate(today.getDate() + 1);
-      const options = { weekday: 'short', day: 'numeric', month: 'short' };
-      const todayText = `Aujourd'hui, ${today.toLocaleDateString('fr-FR', options)}`;
-      const tomorrowText = `Demain, ${tomorrow.toLocaleDateString('fr-FR', options)}`;
-      return [
-        { value: today.toISOString().split('T')[0], text: todayText },
-        { value: tomorrow.toISOString().split('T')[0], text: tomorrowText },
-      ];
+    function clearOrderData() {
+      orderData = { items: [] };
+      localStorage.removeItem('orderData');
+      updateOrderItems();
     }
 
-    pickupLaterRadio.addEventListener('click', () => {
-      const dates = getTwoDates();
-      selectDate.innerHTML = '';
-      dates.forEach(date => {
-        const option = document.createElement('option');
-        option.value = date.value;
-        option.textContent = date.text;
-        selectDate.appendChild(option);
+    function getAvailableSlots() {
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const slots = [];
+
+      openingHours.forEach(period => {
+        const [startHour, startMinute] = period.start.split(':').map(Number);
+        const [endHour, endMinute] = period.end.split(':').map(Number);
+
+        let start = startHour * 60 + startMinute;
+        const end = endHour * 60 + endMinute;
+
+        while (start < end) {
+          if (start > currentTime) {
+            const hours = Math.floor(start / 60).toString().padStart(2, '0');
+            const minutes = (start % 60).toString().padStart(2, '0');
+            slots.push(`${hours}:${minutes}`);
+          }
+          start += 15;
+        }
       });
-      dateModal.style.display = 'block';
+
+      return slots;
+    }
+
+    function openTimeModal() {
+      const slots = getAvailableSlots();
+      const timeSlotsElement = document.getElementById('time-slots');
+      timeSlotsElement.innerHTML = '';
+      slots.forEach(slot => {
+        const li = document.createElement('li');
+        li.textContent = slot;
+        li.addEventListener('click', () => {
+          document.getElementById('selected-slot').value = slot;
+          document.getElementById('time-modal').style.display = 'none';
+        });
+        timeSlotsElement.appendChild(li);
+      });
+      document.getElementById('time-modal').style.display = 'block';
+    }
+
+    document.querySelector('input#pickup-later').addEventListener('change', event => {
+      if (event.target.checked) openTimeModal();
     });
 
-    closeDateModal.addEventListener('click', () => {
-      dateModal.style.display = 'none';
+    document.getElementById('close-time-modal').addEventListener('click', () => {
+      document.getElementById('time-modal').style.display = 'none';
     });
 
-    window.addEventListener('click', (event) => {
-      if (event.target === dateModal) {
-        dateModal.style.display = 'none';
-      }
+    document.getElementById('order-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  if (orderData.items.length === 0) {
+    return; // Do nothing if no items
+  }
+
+  const clientInfo = {
+    prenom: document.getElementById('prenom').value,
+    nom: document.getElementById('nom').value,
+    phone: document.getElementById('phone').value,
+    email: document.getElementById('email').value,
+    comments: document.getElementById('comments').value,
+    pickupTime: document.querySelector('input[name="pickup-time"]:checked').value,
+    pickupSlot: document.getElementById('selected-slot').value || null
+  };
+
+  const payload = {
+    clientInfo,
+    orderData
+  };
+
+  try {
+    const response = await fetch('http://localhost:3000/api/orders', { 
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
 
-    confirmDateButton.addEventListener('click', () => {
-      const selectedDate = selectDate.value;
-      const selectedTime = selectTime.value;
-      console.log(`Date choisie : ${selectedDate}, Heure choisie : ${selectedTime}`);
-      dateModal.style.display = 'none';
+    if (response.ok) {
+      const confirmationModal = document.getElementById('confirmation-modal');
+      confirmationModal.style.display = 'block';
+      clearOrderData();
+    } else {
+      alert('Erreur lors de l’envoi de la commande.');
+    }
+  } catch (error) {
+    console.error('Erreur:', error);
+    alert('Erreur réseau lors de l’envoi de la commande.');
+  }
+});
+
+function updateOrderItems() {
+  itemsList.innerHTML = '';
+  total = 0;
+  orderData.items.forEach((item, index) => {
+    const supplementsText = item.supplements.length > 0 ? `Suppléments: ${item.supplements.join(', ')}` : '';
+    const saucesText = item.sauces.length > 0 ? `Sauces: ${item.sauces.join(', ')}` : '';
+    const retirerText = item.retirer.length > 0 ? `À retirer: ${item.retirer.join(', ')}` : '';
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <p><strong>${item.category}</strong> - ${item.title}</p>
+      <p>${item.price.toFixed(2).replace('.', ',')} €</p>
+      <p>${saucesText}</p>
+      <p>${retirerText}</p>
+      <p>${supplementsText}</p>
+      <button class="remove-item" data-index="${index}">Supprimer</button>
+    `;
+    itemsList.appendChild(li);
+    total += parseFloat(item.price);
+  });
+  totalElement.textContent = `${total.toFixed(2).replace('.', ',')} €`;
+
+  const submitButton = document.querySelector('button[type="submit"]');
+  submitButton.disabled = orderData.items.length === 0; 
+}
+
+
+    document.getElementById('close-confirmation-modal').addEventListener('click', () => {
+      const confirmationModal = document.getElementById('confirmation-modal');
+      confirmationModal.style.display = 'none';
+      window.location.href = '/index.html';
     });
+
+    updateOrderItems();
   </script>
 </body>
 </html>

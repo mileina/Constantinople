@@ -6,24 +6,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const menuContainer = document.getElementById('menu');
   const sidebarItems = document.querySelectorAll('.sidebar ul li');
   const addToCartButton = document.querySelector('.add-to-cart');
+  let menuData = null;
 
   fetch('menu.json')
     .then(response => response.json())
     .then(data => {
-      displayMenu(data["Grillades"]);
+      menuData = data;
+      loadCategory('Grillades');
 
       sidebarItems.forEach(item => {
         item.addEventListener('click', () => {
           const categoryName = item.textContent.trim();
-          menuContainer.innerHTML = '';
-
-          if (data[categoryName]?.menu) {
-            displayMenu(data[categoryName].menu, data[categoryName]?.supplements);
-          } else if (data[categoryName]) {
-            displayMenu(data[categoryName]);
-          } else {
-            console.error(`Données manquantes pour la catégorie: ${categoryName}`);
-          }
+          loadCategory(categoryName);
 
           sidebarItems.forEach(el => el.classList.remove('active'));
           item.classList.add('active');
@@ -32,7 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(error => console.error('Erreur de chargement des données JSON:', error));
 
-  function displayMenu(items, supplements = null) {
+  function loadCategory(categoryName) {
+    menuContainer.innerHTML = '';
+    if (menuData[categoryName]?.menu) {
+      const category = menuData[categoryName];
+      displayMenu(category.menu, categoryName, category.supplements, category.sauces, category.retirer);
+    } else {
+      console.error(`La catégorie "${categoryName}" est introuvable dans les données.`);
+    }
+  }
+
+  function displayMenu(items, category, supplements = null, sauces = null, retirer = null) {
     items.forEach(item => {
       const product = document.createElement('div');
       product.classList.add('product');
@@ -43,14 +47,14 @@ document.addEventListener('DOMContentLoaded', () => {
         <span class="price">${item.price}</span>
       `;
       product.addEventListener('click', () => {
-        openProductModal(item, supplements);
+        openProductModal(item, category, supplements, sauces, retirer);
       });
       menuContainer.appendChild(product);
     });
   }
 
-  function openProductModal(item, supplements = null) {
-    document.getElementById('modal-title').textContent = item.name;
+  function openProductModal(item, category, supplements = null, sauces = null, retirer = null) {
+    document.getElementById('modal-title').textContent = `${category} - ${item.name}`;
     document.getElementById('modal-desc').textContent = item.desc;
     document.getElementById('modal-price').textContent = item.price;
 
@@ -68,38 +72,95 @@ document.addEventListener('DOMContentLoaded', () => {
       modalOptions.appendChild(ul);
     }
 
+    if (sauces) {
+      const sauceSection = document.createElement('div');
+      sauceSection.innerHTML = `<h4>Choisissez jusqu'à ${sauces.max_selection} sauces :</h4>`;
+      const sauceContainer = document.createElement('div');
+      sauces.options.forEach(sauce => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" class="sauce-option" value="${sauce}"> ${sauce}`;
+        sauceContainer.appendChild(label);
+      });
+      sauceSection.appendChild(sauceContainer);
+      modalOptions.appendChild(sauceSection);
+    
+      const sauceCheckboxes = sauceContainer.querySelectorAll('.sauce-option');
+      sauceCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+          const selected = Array.from(sauceCheckboxes).filter(cb => cb.checked);
+          if (selected.length >= sauces.max_selection) {
+            sauceCheckboxes.forEach(cb => {
+              if (!cb.checked) {
+                cb.disabled = true;
+              }
+            });
+          } else {
+            sauceCheckboxes.forEach(cb => cb.disabled = false);
+          }
+        });
+      });
+    }
+    
+
+    if (retirer) {
+      const retirerSection = document.createElement('div');
+      retirerSection.innerHTML = `<h4>À retirer :</h4>`;
+      const retirerContainer = document.createElement('div');
+      retirer.options.forEach(ingredient => {
+        const label = document.createElement('label');
+        label.innerHTML = `<input type="checkbox" class="remove-option" value="${ingredient}"> ${ingredient}`;
+        retirerContainer.appendChild(label);
+      });
+      retirerSection.appendChild(retirerContainer);
+      modalOptions.appendChild(retirerSection);
+    }
+
     addToCartButton.dataset.title = item.name;
+    addToCartButton.dataset.category = category;
     addToCartButton.dataset.price = item.price.replace(',', '.').replace('€', '');
     document.getElementById('modal').style.display = 'block';
   }
 
   addToCartButton.addEventListener('click', () => {
     const title = addToCartButton.dataset.title;
+    const category = addToCartButton.dataset.category;
     let price = parseFloat(addToCartButton.dataset.price);
-
-    const selectedSupplements = [];
-    const options = document.querySelectorAll('.modal-options input[type="checkbox"]:checked');
-    options.forEach(option => {
-      selectedSupplements.push(option.value);
-      price += parseFloat(option.dataset.price);
-    });
-
-    cart.push({ title, price, supplements: selectedSupplements });
+  
+    const selectedSupplements = Array.from(document.querySelectorAll('.modal-options input[type="checkbox"]:checked'))
+      .filter(option => option.closest('ul')) 
+      .map(option => {
+        price += parseFloat(option.dataset.price || 0);
+        return option.value;
+      });
+  
+    const sauces = Array.from(document.querySelectorAll('.sauce-option:checked')).map(option => option.value);
+  
+    const retirer = Array.from(document.querySelectorAll('.remove-option:checked')).map(option => option.value);
+  
+    cart.push({ category, title, price, supplements: selectedSupplements, sauces, retirer });
     saveCart();
     cartCountElement.textContent = cart.length;
     document.getElementById('modal').style.display = 'none';
     showNotification(`"${title}" a été ajouté au panier !`);
   });
+  
 
   function updateCartModal() {
     cartItemsElement.innerHTML = '';
     let total = 0;
 
     cart.forEach((item, index) => {
-      const supplementsText = item.supplements.length > 0 ? ` (${item.supplements.join(', ')})` : '';
+      const supplementsText = item.supplements.length > 0 ? `Suppléments: ${item.supplements.join(', ')}` : '';
+      const saucesText = item.sauces.length > 0 ? `Sauces: ${item.sauces.join(', ')}` : '';
+      const retirerText = item.retirer.length > 0 ? `À retirer: ${item.retirer.join(', ')}` : '';
+
       const li = document.createElement('li');
       li.innerHTML = `
-        <span>${item.title} - ${item.price.toFixed(2).replace('.', ',')} €${supplementsText}</span>
+        <span>${item.category} - ${item.title}</span>
+        <p>${saucesText}</p>
+        <p>${retirerText}</p>
+        <p>${supplementsText}</p>
+        <p>Prix: ${item.price.toFixed(2).replace('.', ',')} €</p>
         <button class="remove-item" data-index="${index}">Supprimer</button>
       `;
 
@@ -142,8 +203,14 @@ document.addEventListener('DOMContentLoaded', () => {
       total: cartTotalElement.textContent
     };
     localStorage.setItem('orderData', JSON.stringify(orderData));
+
+    cart = [];
+    saveCart(); 
+    cartCountElement.textContent = cart.length;
+  
     window.location.href = 'confirmation.html';
   });
+  
 
   window.addEventListener('click', event => {
     const modal = document.getElementById('modal');
@@ -158,16 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const modalClose = document.getElementById('modal-close');
-  const modal = document.getElementById('modal');
   modalClose.addEventListener('click', () => {
-    modal.style.display = 'none';
+    document.getElementById('modal').style.display = 'none';
   });
 
   function showNotification(message) {
     const notification = document.getElementById('notification');
     notification.textContent = message;
     notification.classList.remove('hidden');
-
     setTimeout(() => {
       notification.classList.add('hidden');
     }, 3000);

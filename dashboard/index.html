@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de Commandes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login screen -->
+  <div id="login-screen" style="display: flex; flex-direction: column; align-items: center; margin-top: 50px;">
+    <h1>Connexion Admin</h1>
+    <form id="login-form" style="display: flex; flex-direction: column; width: 300px;">
+      <label for="password">Mot de Passe :</label>
+      <input type="password" id="password" required>
+      <button type="submit">Se Connecter</button>
+    </form>
+  </div>
+
+  <!-- Admin Dashboard -->
+  <div id="dashboard" style="display: none;">
+    <header>
+      <h1>Tableau de Commandes</h1>
+      <button id="print-all-orders">Imprimer toutes les commandes d'aujourd'hui</button>
+      <button id="clear-all-orders">Tout supprimer</button>
+      <button id="logout">Déconnexion</button>
+    </header>
+
+    <section>
+      <h2>Commandes en Attente</h2>
+      <table id="pending-orders-table">
+        <thead>
+          <tr>
+            <th>Heure</th>
+            <th>Prénom</th>
+            <th>Nom</th>
+            <th>Téléphone</th>
+            <th>Produits</th>
+            <th>Retrait</th> 
+            <th>Total (€)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Commandes Terminées</h2>
+      <table id="completed-orders-table">
+        <thead>
+          <tr>
+            <th>Heure</th>
+            <th>Prénom</th>
+            <th>Nom</th>
+            <th>Téléphone</th>
+            <th>Produits</th>
+            <th>Retrait</th> 
+            <th>Total (€)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </div>
+
+  <!-- Sound for new orders -->
+  <audio id="order-sound" src="./order_received.wav" preload="auto"></audio>
+
+  <script src="script.js"></script>
+</body>
+</html>

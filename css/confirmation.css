@@ -30,22 +30,49 @@ h2 {
 
 ul li {
     background: #333;
-    padding: 8px;
-    margin: 5px 0;
+    padding: 10px;
+    margin: 8px 0;
     border-radius: 4px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 5px;
+}
+
+ul li span.title {
+    font-weight: bold;
+    color: #3d85c6;
+    font-size: 1em;
+}
+
+ul li p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+ul li p.suppl, ul li p.sauce, ul li p.retirer {
+    color: #7dd87d;
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+ul li p.sauce {
+    color: #ffa500;
+}
+
+ul li p.retirer {
+    color: #ff6961;
 }
 
 .remove-item {
     background-color: #ff0000;
     color: white;
     border: none;
-    padding: 4px 8px;
+    padding: 5px 10px;
     cursor: pointer;
     border-radius: 3px;
     font-size: 10px;
+    align-self: flex-end;
 }
 
 .remove-item:hover {
@@ -57,6 +84,7 @@ ul li {
     font-size: 1em;
     font-weight: bold;
     color: #ff0000;
+    text-align: right;
 }
 
 form {
@@ -159,6 +187,7 @@ button:hover {
 .back-button:hover {
     background-color: #cc0000;
 }
+
 form textarea {
     width: 100%;
     height: 100px;
