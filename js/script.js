@@ -202,14 +202,12 @@ document.addEventListener('DOMContentLoaded', () => {
       items: cart,
       total: cartTotalElement.textContent
     };
+  
     localStorage.setItem('orderData', JSON.stringify(orderData));
-
-    cart = [];
-    saveCart(); 
-    cartCountElement.textContent = cart.length;
   
     window.location.href = 'confirmation.html';
   });
+  
   
 
   window.addEventListener('click', event => {
