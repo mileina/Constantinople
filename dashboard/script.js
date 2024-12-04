@@ -152,8 +152,18 @@ function printOrder(index) {
 
 async function clearAllOrders() {
   if (confirm('Êtes-vous sûr de vouloir supprimer toutes les commandes ?')) {
-    await fetch(`${API_BASE_URL}/delete-all`, { method: 'DELETE' });
-    fetchOrders();
+    try {
+      const response = await fetch(API_BASE_URL, { method: 'DELETE' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erreur lors de la suppression des commandes');
+      }
+      alert('Toutes les commandes ont été supprimées avec succès.');
+      fetchOrders();
+    } catch (error) {
+      console.error('Erreur lors de la suppression des commandes:', error);
+      alert(`Erreur : ${error.message}`);
+    }
   }
 }
 

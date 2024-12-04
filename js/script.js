@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const ul = document.createElement('ul');
       for (const [name, price] of Object.entries(supplements)) {
         const li = document.createElement('li');
-        li.innerHTML = `<input type="checkbox" data-price="${price.replace(',', '.').replace('€', '')}" value="${name}"> ${name} (+${price})`;
+        li.innerHTML = `<input type="checkbox" data-price="${price.replace(',', '.').replace('€', '')}" value="${name}"> <span class="supplement-name">${name}</span> (+${price})`;
         ul.appendChild(li);
       }
       modalOptions.innerHTML = `<h4>Suppléments au choix</h4>`;
@@ -183,6 +183,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveCart() {
     localStorage.setItem('cart', JSON.stringify(cart));
+    const expiryDate = new Date();
+    expiryDate.setHours(expiryDate.getHours() + 1);
+    localStorage.setItem('cart-expiry', expiryDate.toISOString());
   }
 
   const cartButton = document.querySelector('.cart');
@@ -207,8 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
     window.location.href = 'confirmation.html';
   });
-  
-  
 
   window.addEventListener('click', event => {
     const modal = document.getElementById('modal');
@@ -237,4 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   cartCountElement.textContent = cart.length;
+
+  const cartExpiry = new Date(localStorage.getItem('cart-expiry'));
+  const currentTime = new Date();
+  if (currentTime > cartExpiry) {
+    localStorage.removeItem('cart');
+    localStorage.removeItem('cart-expiry');
+    cart = [];
+    cartCountElement.textContent = cart.length;
+  }
 });

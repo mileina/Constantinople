@@ -645,3 +645,8 @@ input[type="checkbox"] {
 #admin-access:hover {
   background-color: #444;
 }
+
+.supplements-header {
+  cursor: pointer;
+}
+
