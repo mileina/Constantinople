@@ -1,7 +1,7 @@
 const API_BASE_URL = 'http://localhost:3000/api/orders';
 let orders = [];
 
-const orderReceivedSound = document.getElementById('order-sound'); // Reference the audio element
+const orderReceivedSound = document.getElementById('order-sound');
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('login-form');
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
     const enteredPassword = document.getElementById('password').value;
-    if (enteredPassword === 'admin123') { // Replace with your desired password
+    if (enteredPassword === 'admin123') {
       sessionStorage.setItem('adminLoggedIn', 'true');
       loginScreen.style.display = 'none';
       dashboard.style.display = 'block';
@@ -42,7 +42,7 @@ async function fetchOrders() {
   const newOrders = await response.json();
 
   if (newOrders.length > orders.length) {
-    orderReceivedSound.play(); // Play sound when a new order is received
+    orderReceivedSound.play();
   }
 
   orders = newOrders;
@@ -69,12 +69,12 @@ function displayOrders(tableId, orders, isPending) {
           .filter(Boolean)
           .join('<br>');
 
-        return `<strong>${product.title}</strong><br>${options}`;
+        return `<strong>[${product.category}] ${product.title}</strong><br>${options}`;
       })
       .join('<hr>');
 
-    const pickupTime = order.clientInfo.pickupTime === 'asap' 
-      ? 'Le plus tôt possible' 
+    const pickupTime = order.clientInfo.pickupTime === 'asap'
+      ? 'Le plus tôt possible'
       : `À ${order.clientInfo.pickupSlot || 'horaire inconnu'}`;
 
     const row = document.createElement('tr');
@@ -85,12 +85,13 @@ function displayOrders(tableId, orders, isPending) {
       <td>${order.clientInfo.phone}</td>
       <td>${productsHtml}</td>
       <td>${pickupTime}</td>
+      <td>${order.clientInfo.comments || 'Aucun commentaire'}</td>
       <td>${order.orderData.total}</td>
       ${
         isPending
           ? `<td>
-              <button class="complete-button" onclick="markAsComplete(${orders.indexOf(order)})">Terminer</button>
-              <button class="print-button" onclick="printOrder(${orders.indexOf(order)})">Imprimer</button>
+              <button class="complete-button" onclick="markAsComplete(${index})">Terminer</button>
+              <button class="print-button" onclick="printOrder(${index})">Imprimer</button>
             </td>`
           : ''
       }
@@ -98,6 +99,7 @@ function displayOrders(tableId, orders, isPending) {
     tableBody.appendChild(row);
   });
 }
+
 
 async function markAsComplete(index) {
   const orderToComplete = orders.find(order => !order.completed && orders.indexOf(order) === index);
@@ -125,10 +127,11 @@ function printOrder(index) {
         <p><strong>Client:</strong> ${order.clientInfo.prenom} ${order.clientInfo.nom}</p>
         <p><strong>Téléphone:</strong> ${order.clientInfo.phone}</p>
         <p><strong>Retrait:</strong> ${
-          order.clientInfo.pickupTime === 'asap' 
-          ? 'Le plus tôt possible' 
+          order.clientInfo.pickupTime === 'asap'
+          ? 'Le plus tôt possible'
           : `À ${order.clientInfo.pickupSlot || 'horaire inconnu'}`
         }</p>
+        <p><strong>Commentaires:</strong> ${order.clientInfo.comments || 'Aucun commentaire'}</p>
         <p><strong>Produits:</strong></p>
         <ul>
           ${order.orderData.items.map(product => ` 
@@ -168,7 +171,7 @@ async function clearAllOrders() {
 }
 
 function setupAutoRefresh() {
-  setInterval(fetchOrders, 5000); // Auto refresh every 5 seconds
+  setInterval(fetchOrders, 5000);
 }
 
 document.getElementById('clear-all-orders').addEventListener('click', clearAllOrders);
@@ -190,6 +193,7 @@ document.getElementById('print-all-orders').addEventListener('click', () => {
               <th>Téléphone</th>
               <th>Produits</th>
               <th>Retrait</th>
+              <th>Commentaires</th>
               <th>Total (€)</th>
             </tr>
           </thead>
@@ -201,6 +205,7 @@ document.getElementById('print-all-orders').addEventListener('click', () => {
                 <td>${order.clientInfo.phone}</td>
                 <td>${order.orderData.items.map(item => `${item.title}`).join(', ')}</td>
                 <td>${order.clientInfo.pickupTime === 'asap' ? 'Le plus tôt possible' : `À ${order.clientInfo.pickupSlot || 'horaire inconnu'}`}</td>
+                <td>${order.clientInfo.comments || 'Aucun commentaire'}</td>
                 <td>${order.orderData.total}</td>
               </tr>
             `).join('')}

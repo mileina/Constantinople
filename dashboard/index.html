@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Login screen -->
   <div id="login-screen" style="display: flex; flex-direction: column; align-items: center; margin-top: 50px;">
     <h1>Connexion Admin</h1>
     <form id="login-form" style="display: flex; flex-direction: column; width: 300px;">
@@ -17,7 +16,6 @@
     </form>
   </div>
 
-  <!-- Admin Dashboard -->
   <div id="dashboard" style="display: none;">
     <header>
       <h1>Tableau de Commandes</h1>
@@ -36,7 +34,8 @@
             <th>Nom</th>
             <th>Téléphone</th>
             <th>Produits</th>
-            <th>Retrait</th> 
+            <th>Retrait</th>
+            <th>Commentaires</th>
             <th>Total (€)</th>
             <th>Action</th>
           </tr>
@@ -55,7 +54,8 @@
             <th>Nom</th>
             <th>Téléphone</th>
             <th>Produits</th>
-            <th>Retrait</th> 
+            <th>Retrait</th>
+            <th>Commentaires</th>
             <th>Total (€)</th>
           </tr>
         </thead>
@@ -64,7 +64,6 @@
     </section>
   </div>
 
-  <!-- Sound for new orders -->
   <audio id="order-sound" src="./order_received.wav" preload="auto"></audio>
 
   <script src="script.js"></script>

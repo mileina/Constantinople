@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Confirmation de Commande</title>
   <link rel="stylesheet" href="/css/confirmation.css">
-
 </head>
 <body>
   <header>
@@ -30,7 +29,7 @@
       <input type="email" id="email" name="email" required>
       <h2>Date</h2>
       <label>
-        <input type="radio" name="pickup-time" value="asap" checked>
+        <input type="radio" name="pickup-time" value="asap" id="pickup-asap">
         Récupérer les plus tôt possible
       </label>
       <label>
@@ -39,7 +38,7 @@
       </label>
       <div id="time-modal" class="modal">
         <div class="modal-content">
-          <button class="close-modal">&times;</button>
+          <button class="close-modal" data-modal="time-modal">&times;</button>
           <h3>Choisissez un créneau :</h3>
           <ul id="time-slots"></ul>
         </div>
@@ -57,6 +56,25 @@
     </form>
   </section>
 
+  <div id="closed-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <button class="close-modal" data-modal="closed-modal">&times;</button>
+      <h3>Restaurant Fermé</h3>
+      <p>Le restaurant est actuellement fermé. Vous pouvez commander pour un retrait ultérieur.</p>
+    </div>
+  </div>
+
+  <div id="confirmation-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <button class="close-modal" data-modal="confirmation-modal">&times;</button>
+      <h3>Commande Confirmée</h3>
+      <p>Votre commande a été enregistrée avec succès !</p>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="closed-modal-overlay" style="display: none;"></div>
+  <div class="modal-overlay" id="confirmation-modal-overlay" style="display: none;"></div>
+
   <script>
     const openingHours = [
       { start: "11:30", end: "15:00" },
@@ -66,6 +84,8 @@
     let orderData = JSON.parse(localStorage.getItem('orderData')) || { items: [] };
     const itemsList = document.getElementById('order-items');
     const totalElement = document.getElementById('order-total');
+    const pickupAsap = document.getElementById('pickup-asap');
+    const pickupLater = document.getElementById('pickup-later');
 
     function updateOrderItems() {
       itemsList.innerHTML = '';
@@ -97,11 +117,108 @@
       });
     }
 
+    function isRestaurantOpen(now = new Date()) {
+      const currentTime = now.getHours() * 20 + now.getMinutes();
+      return openingHours.some(period => {
+        const [startHour, startMinute] = period.start.split(':').map(Number);
+        const [endHour, endMinute] = period.end.split(':').map(Number);
+        const start = startHour * 20 + startMinute;
+        const end = endHour * 20 + endMinute;
+        return currentTime >= start && currentTime <= end;
+      });
+    }
+
+    function getNextOpeningPeriod(now = new Date()) {
+      const currentTime = now.getHours() * 20 + now.getMinutes();
+      for (let period of openingHours) {
+        const [startHour, startMinute] = period.start.split(':').map(Number);
+        const start = startHour * 20 + startMinute;
+        if (currentTime < start) {
+          return period;
+        }
+      }
+      // If no more opening periods today, return the first period tomorrow
+      return openingHours[0];
+    }
+
+    function getAvailableSlots() {
+      const now = new Date();
+      const currentTime = now.getHours() * 20 + now.getMinutes();
+      const slots = [];
+      let targetPeriod = openingHours.find(period => {
+        const [startHour, startMinute] = period.start.split(':').map(Number);
+        const start = startHour * 20 + startMinute;
+        return currentTime < start;
+      });
+
+      if (!targetPeriod) {
+        targetPeriod = openingHours[0];
+        now.setDate(now.getDate() + 1);
+      }
+
+      const [startHour, startMinute] = targetPeriod.start.split(':').map(Number);
+      let start = startHour * 20 + startMinute;
+      const [endHour, endMinute] = targetPeriod.end.split(':').map(Number);
+      const end = endHour * 20 + endMinute;
+
+      while (start < end) {
+        const hours = Math.floor(start / 20).toString().padStart(2, '0');
+        const minutes = (start % 20).toString().padStart(2, '0');
+        slots.push(`${hours}:${minutes}`);
+        start += 15;
+      }
+
+      return slots;
+    }
+
+    function openTimeModal() {
+      const slots = getAvailableSlots();
+      const timeSlotsElement = document.getElementById('time-slots');
+      timeSlotsElement.innerHTML = '';
+      slots.forEach(slot => {
+        const li = document.createElement('li');
+        li.textContent = slot;
+        li.addEventListener('click', () => {
+          document.getElementById('selected-slot').value = slot;
+          closeModal('time-modal', 'time-modal-overlay');
+        });
+        timeSlotsElement.appendChild(li);
+      });
+      document.getElementById('time-modal').style.display = 'block';
+      document.getElementById('time-modal-overlay').style.display = 'block';
+    }
+
+    function closeModal(modalId, overlayId) {
+      document.getElementById(modalId).style.display = 'none';
+      document.getElementById(overlayId).style.display = 'none';
+    }
+
+    function updatePickupOptions() {
+      if (!isRestaurantOpen()) {
+        pickupAsap.disabled = true;
+        document.getElementById('closed-modal').style.display = 'block';
+        document.getElementById('closed-modal-overlay').style.display = 'block';
+      } else {
+        pickupAsap.disabled = false;
+      }
+    }
+
     async function submitOrder(event) {
       event.preventDefault();
 
       if (orderData.items.length === 0) {
         alert("Votre panier est vide !");
+        return;
+      }
+
+      const pickupTimeSelected = document.querySelector('input[name="pickup-time"]:checked');
+      if (!pickupTimeSelected) {
+        alert("Veuillez sélectionner une option de récupération.");
+        return;
+      }
+
+      if (pickupTimeSelected.value === 'later' && !document.getElementById('selected-slot').value) {
+        alert("Veuillez sélectionner un créneau horaire.");
         return;
       }
 
@@ -111,7 +228,7 @@
         phone: document.getElementById('phone').value,
         email: document.getElementById('email').value,
         comments: document.getElementById('comments').value,
-        pickupTime: document.querySelector('input[name="pickup-time"]:checked').value,
+        pickupTime: pickupTimeSelected.value,
         pickupSlot: document.getElementById('selected-slot').value || null,
       };
 
@@ -128,9 +245,12 @@
         });
 
         if (response.ok) {
-          alert('Commande confirmée avec succès !');
           localStorage.removeItem('orderData');
-          window.location.href = "/index.html"; // Redirection vers la page principale
+          document.getElementById('confirmation-modal').style.display = 'block';
+          document.getElementById('confirmation-modal-overlay').style.display = 'block';
+          setTimeout(() => {
+            window.location.href = '/index.html';
+          }, 2000);
         } else {
           alert('Erreur lors de la confirmation de la commande.');
         }
@@ -140,65 +260,42 @@
       }
     }
 
-    function getAvailableSlots() {
-      const now = new Date();
-      const currentTime = now.getHours() * 60 + now.getMinutes();
-      const slots = [];
-
-      openingHours.forEach(period => {
-        const [startHour, startMinute] = period.start.split(':').map(Number);
-        const [endHour, endMinute] = period.end.split(':').map(Number);
-
-        let start = startHour * 60 + startMinute;
-        const end = endHour * 60 + endMinute;
-
-        while (start < end) {
-          if (start > currentTime) {
-            const hours = Math.floor(start / 60).toString().padStart(2, '0');
-            const minutes = (start % 60).toString().padStart(2, '0');
-            slots.push(`${hours}:${minutes}`);
-          }
-          start += 15;
+    document.querySelectorAll('.close-modal').forEach(button => {
+      button.addEventListener('click', () => {
+        const modalId = button.getAttribute('data-modal');
+        if (modalId === 'time-modal') {
+          closeModal('time-modal', 'time-modal-overlay');
+        } else if (modalId === 'closed-modal') {
+          closeModal('closed-modal', 'closed-modal-overlay');
+        } else if (modalId === 'confirmation-modal') {
+          closeModal('confirmation-modal', 'confirmation-modal-overlay');
         }
       });
+    });
 
-      return slots;
-    }
-
-    function openTimeModal() {
-      const slots = getAvailableSlots();
-      const timeSlotsElement = document.getElementById('time-slots');
-      timeSlotsElement.innerHTML = '';
-      slots.forEach(slot => {
-        const li = document.createElement('li');
-        li.textContent = slot;
-        li.addEventListener('click', () => {
-          document.getElementById('selected-slot').value = slot;
-          document.getElementById('time-modal').style.display = 'none';
-          document.getElementById('time-modal-overlay').style.display = 'none';
-        });
-        timeSlotsElement.appendChild(li);
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (event) => {
+        const overlayId = event.target.id;
+        if (overlayId === 'time-modal-overlay') {
+          closeModal('time-modal', 'time-modal-overlay');
+        } else if (overlayId === 'closed-modal-overlay') {
+          closeModal('closed-modal', 'closed-modal-overlay');
+        } else if (overlayId === 'confirmation-modal-overlay') {
+          closeModal('confirmation-modal', 'confirmation-modal-overlay');
+        }
       });
-      document.getElementById('time-modal').style.display = 'block';
-      document.getElementById('time-modal-overlay').style.display = 'block';
-    }
-
-    document.querySelector('input#pickup-later').addEventListener('change', event => {
-      if (event.target.checked) openTimeModal();
     });
 
-    document.querySelector('.close-modal').addEventListener('click', () => {
-      document.getElementById('time-modal').style.display = 'none';
-      document.getElementById('time-modal-overlay').style.display = 'none';
-    });
-
-    document.getElementById('time-modal-overlay').addEventListener('click', () => {
-      document.getElementById('time-modal').style.display = 'none';
-      document.getElementById('time-modal-overlay').style.display = 'none';
+    document.getElementById('pickup-later').addEventListener('change', () => {
+      if (pickupLater.checked) {
+        openTimeModal();
+      }
     });
 
     document.getElementById('order-form').addEventListener('submit', submitOrder);
+
     updateOrderItems();
+    updatePickupOptions();
   </script>
 </body>
 </html>

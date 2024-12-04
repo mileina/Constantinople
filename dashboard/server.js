@@ -9,11 +9,21 @@ let orders = [];
 
 app.post('/api/orders', (req, res) => {
     const newOrder = req.body;
+
     if (!newOrder || !newOrder.clientInfo || !newOrder.orderData) {
         return res.status(400).send({ message: 'Invalid order data' });
     }
-    orders.push({ ...newOrder, timestamp: Date.now(), completed: false });
-    console.log('New order received:', newOrder);
+
+    const orderWithComments = {
+        ...newOrder,
+        timestamp: Date.now(),
+        completed: false,
+        comments: newOrder.clientInfo.comments || ''
+    };
+
+    orders.push(orderWithComments);
+
+    console.log('New order received:', orderWithComments);
     res.status(200).send({ message: 'Order received successfully' });
 });
 
@@ -23,9 +33,11 @@ app.get('/api/orders', (req, res) => {
 
 app.post('/api/orders/complete', (req, res) => {
     const { index } = req.body;
+
     if (isNaN(index) || index < 0 || index >= orders.length) {
         return res.status(404).send({ message: 'Order not found' });
     }
+
     orders[index].completed = true;
     console.log(`Order at index ${index} marked as completed`);
     res.status(200).send({ message: 'Order marked as completed' });
@@ -39,9 +51,11 @@ app.delete('/api/orders', (req, res) => {
 
 app.delete('/api/orders/:index', (req, res) => {
     const index = parseInt(req.params.index, 10);
+
     if (isNaN(index) || index < 0 || index >= orders.length) {
         return res.status(404).send({ message: 'Order not found' });
     }
+
     orders.splice(index, 1);
     console.log(`Order at index ${index} removed`);
     res.status(200).send({ message: 'Order removed successfully' });
