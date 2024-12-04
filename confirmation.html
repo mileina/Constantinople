@@ -5,6 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Confirmation de Commande</title>
   <link rel="stylesheet" href="/css/confirmation.css">
+  <style>
+    .modal {
+      position: fixed;
+      background: none;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 1000;
+      border-radius: 10px;
+      width: 80%;
+      max-width: 500px;
+      padding: 20px;
+      display: none;
+    }
+
+    .modal-content {
+      position: relative;
+      text-align: center;
+    }
+
+    .close-modal {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 999;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -36,13 +77,14 @@
         <input type="radio" name="pickup-time" id="pickup-later" value="later">
         Récupérer plus tard
       </label>
-      <div id="time-modal" class="modal" style="display: none;">
+      <div id="time-modal" class="modal">
         <div class="modal-content">
+          <button class="close-modal">&times;</button>
           <h3>Choisissez un créneau :</h3>
           <ul id="time-slots"></ul>
-          <button id="close-time-modal">Fermer</button>
         </div>
       </div>
+      <div class="modal-overlay" id="time-modal-overlay"></div>
       <input type="hidden" id="selected-slot" name="selected-slot">
       <h2>Moyen de paiement</h2>
       <label>
@@ -55,14 +97,6 @@
     </form>
   </section>
 
-  <div id="confirmation-modal" class="modal">
-    <div class="modal-content">
-      <h2>Confirmation</h2>
-      <p>Votre commande a été envoyée avec succès au serveur !</p>
-      <button id="close-confirmation-modal">Fermer</button>
-    </div>
-  </div>
-
   <script>
     const openingHours = [
       { start: "11:30", end: "15:00" },
@@ -72,11 +106,10 @@
     let orderData = JSON.parse(localStorage.getItem('orderData')) || { items: [] };
     const itemsList = document.getElementById('order-items');
     const totalElement = document.getElementById('order-total');
-    let total = 0;
 
     function updateOrderItems() {
       itemsList.innerHTML = '';
-      total = 0;
+      let total = 0;
       orderData.items.forEach((item, index) => {
         const supplementsText = item.supplements.length > 0 ? `Suppléments: ${item.supplements.join(', ')}` : '';
         const saucesText = item.sauces.length > 0 ? `Sauces: ${item.sauces.join(', ')}` : '';
@@ -98,20 +131,53 @@
         button.addEventListener('click', event => {
           const index = event.target.dataset.index;
           orderData.items.splice(index, 1);
-          saveOrderData();
+          localStorage.setItem('orderData', JSON.stringify(orderData));
           updateOrderItems();
         });
       });
     }
 
-    function saveOrderData() {
-      localStorage.setItem('orderData', JSON.stringify(orderData));
-    }
+    async function submitOrder(event) {
+      event.preventDefault();
 
-    function clearOrderData() {
-      orderData = { items: [] };
-      localStorage.removeItem('orderData');
-      updateOrderItems();
+      if (orderData.items.length === 0) {
+        alert("Votre panier est vide !");
+        return;
+      }
+
+      const clientInfo = {
+        prenom: document.getElementById('prenom').value,
+        nom: document.getElementById('nom').value,
+        phone: document.getElementById('phone').value,
+        email: document.getElementById('email').value,
+        comments: document.getElementById('comments').value,
+        pickupTime: document.querySelector('input[name="pickup-time"]:checked').value,
+        pickupSlot: document.getElementById('selected-slot').value || null,
+      };
+
+      const payload = {
+        clientInfo,
+        orderData,
+      };
+
+      try {
+        const response = await fetch('http://localhost:3000/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (response.ok) {
+          alert('Commande confirmée avec succès !');
+          localStorage.removeItem('orderData');
+          window.location.href = "/index.html"; // Redirection vers la page principale
+        } else {
+          alert('Erreur lors de la confirmation de la commande.');
+        }
+      } catch (error) {
+        console.error('Erreur réseau:', error);
+        alert('Une erreur réseau est survenue.');
+      }
     }
 
     function getAvailableSlots() {
@@ -149,94 +215,29 @@
         li.addEventListener('click', () => {
           document.getElementById('selected-slot').value = slot;
           document.getElementById('time-modal').style.display = 'none';
+          document.getElementById('time-modal-overlay').style.display = 'none';
         });
         timeSlotsElement.appendChild(li);
       });
       document.getElementById('time-modal').style.display = 'block';
+      document.getElementById('time-modal-overlay').style.display = 'block';
     }
 
     document.querySelector('input#pickup-later').addEventListener('change', event => {
       if (event.target.checked) openTimeModal();
     });
 
-    document.getElementById('close-time-modal').addEventListener('click', () => {
+    document.querySelector('.close-modal').addEventListener('click', () => {
       document.getElementById('time-modal').style.display = 'none';
+      document.getElementById('time-modal-overlay').style.display = 'none';
     });
 
-    document.getElementById('order-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-
-  if (orderData.items.length === 0) {
-    return; // Do nothing if no items
-  }
-
-  const clientInfo = {
-    prenom: document.getElementById('prenom').value,
-    nom: document.getElementById('nom').value,
-    phone: document.getElementById('phone').value,
-    email: document.getElementById('email').value,
-    comments: document.getElementById('comments').value,
-    pickupTime: document.querySelector('input[name="pickup-time"]:checked').value,
-    pickupSlot: document.getElementById('selected-slot').value || null
-  };
-
-  const payload = {
-    clientInfo,
-    orderData
-  };
-
-  try {
-    const response = await fetch('http://localhost:3000/api/orders', { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    document.getElementById('time-modal-overlay').addEventListener('click', () => {
+      document.getElementById('time-modal').style.display = 'none';
+      document.getElementById('time-modal-overlay').style.display = 'none';
     });
 
-    if (response.ok) {
-      const confirmationModal = document.getElementById('confirmation-modal');
-      confirmationModal.style.display = 'block';
-      clearOrderData();
-    } else {
-      alert('Erreur lors de l’envoi de la commande.');
-    }
-  } catch (error) {
-    console.error('Erreur:', error);
-    alert('Erreur réseau lors de l’envoi de la commande.');
-  }
-});
-
-function updateOrderItems() {
-  itemsList.innerHTML = '';
-  total = 0;
-  orderData.items.forEach((item, index) => {
-    const supplementsText = item.supplements.length > 0 ? `Suppléments: ${item.supplements.join(', ')}` : '';
-    const saucesText = item.sauces.length > 0 ? `Sauces: ${item.sauces.join(', ')}` : '';
-    const retirerText = item.retirer.length > 0 ? `À retirer: ${item.retirer.join(', ')}` : '';
-    const li = document.createElement('li');
-    li.innerHTML = `
-      <p><strong>${item.category}</strong> - ${item.title}</p>
-      <p>${item.price.toFixed(2).replace('.', ',')} €</p>
-      <p>${saucesText}</p>
-      <p>${retirerText}</p>
-      <p>${supplementsText}</p>
-      <button class="remove-item" data-index="${index}">Supprimer</button>
-    `;
-    itemsList.appendChild(li);
-    total += parseFloat(item.price);
-  });
-  totalElement.textContent = `${total.toFixed(2).replace('.', ',')} €`;
-
-  const submitButton = document.querySelector('button[type="submit"]');
-  submitButton.disabled = orderData.items.length === 0; 
-}
-
-
-    document.getElementById('close-confirmation-modal').addEventListener('click', () => {
-      const confirmationModal = document.getElementById('confirmation-modal');
-      confirmationModal.style.display = 'none';
-      window.location.href = '/index.html';
-    });
-
+    document.getElementById('order-form').addEventListener('submit', submitOrder);
     updateOrderItems();
   </script>
 </body>
